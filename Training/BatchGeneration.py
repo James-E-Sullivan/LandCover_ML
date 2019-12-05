@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from DataPreparation import data_preparation_functions as dpf
 
 script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-#ext_data_path = os.path.dirname(script_path)
+
 ext_data_path = dpf.get_external_data_directory()
 
 
@@ -87,7 +87,6 @@ class DataGenerator(Sequence):
                 reshaped_data = reshaped_data[:, :, :3]
 
             # Store sample
-            #X[i,] = np.load(npy_file_path)
             X[i,] = reshaped_data
 
             # Store class
@@ -95,159 +94,3 @@ class DataGenerator(Sequence):
 
         return X, keras.utils.to_categorical(y, num_classes=self.n_classes)
 
-
-if __name__ == '__main__':
-
-    name = 'combined'
-
-    script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-    ext_data_path = os.path.dirname(script_path)
-    training_dir = os.path.join(ext_data_path, 'Data', 'Training')
-    validation_dir = os.path.join(ext_data_path, 'Data', 'Validation')
-
-    # training data and labels
-    training_npy_dir = os.path.join(training_dir, 'Data_NPY')
-    training_label_dict_path = os.path.join(training_dir, 'Labels', 'combined_labels.dict')
-    training_binary_label_dict_path = os.path.join(training_dir, 'Labels', 'combined_binary_labels.dict')
-
-    # validation dat and labels
-    validation_npy_dir = os.path.join(validation_dir, 'Data_NPY')
-    validation_label_dict_path = os.path.join(validation_dir, 'Labels', 'combined_labels.dict')
-    validation_binary_label_dict_path = os.path.join(validation_dir, 'Labels', 'combined_binary_labels.dict')
-
-    # read training label dict and unpack items
-    training_label_dict = object_io.read_object(training_binary_label_dict_path)
-    training_ids, training_labels = zip(*training_label_dict.items())
-
-    # read validation label dict and unpack items
-    validation_label_dict = object_io.read_object(validation_binary_label_dict_path)
-    validation_ids, validation_labels = zip(*validation_label_dict.items())
-
-
-
-
-    '''
-    # dict for binary classification of developed land
-    training_binary_label_dict = {}
-    validation_binary_label_dict = {}
-
-    for k, v in training_label_dict.items():
-        if 1 < v < 6:
-            training_binary_label_dict[k] = 1
-        else:
-            training_binary_label_dict[k] = 0
-
-    for k, v in validation_label_dict.items():
-        if 1 < v < 6:
-            validation_binary_label_dict[k] = 1
-        else:
-            validation_binary_label_dict[k] = 0
-    '''
-
-
-
-
-    # define class weights
-    training_class_weights = {}
-    validation_class_weights = {}
-
-    for i in range(0, 26):
-        training_class_weights[i] = 0
-        validation_class_weights[i] = 0
-
-    training_class_count = Counter(training_label_dict.values())
-    validation_class_count = Counter(validation_label_dict.values())
-
-    training_samples = len(training_label_dict)
-    validation_samples = len(validation_label_dict)
-
-    training_class_weights.update(training_class_count)
-    validation_class_weights.update(validation_class_count)
-
-    for key, value in training_class_weights.items():
-        training_class_weights[key] = value / training_samples
-
-    for key, value in validation_class_weights.items():
-        validation_class_weights[key] = value / validation_samples
-
-
-    weight_test = [1, 1, 1, 2]
-
-    class_weight = class_weight.compute_class_weight('balanced', np.unique(weight_test),
-                                                     weight_test)
-
-
-    # instantiate training and validation generator objects
-    training_generator = DataGenerator(training_ids, training_label_dict, training=True)
-    validation_generator = DataGenerator(validation_ids, validation_label_dict, training=False)
-
-
-
-    # The model is augmented code from:
-    # https://github.com/fchollet/deep-learning-with-python-notebooks/blob/master/
-    # 5.2-using-convnets-with-small-datasets.ipynb
-
-    # sequential model with 3 Conv2d + MaxPooling2D layers
-    model = models.Sequential()
-
-    # layer 1
-    model.add(layers.Conv2D(32, (3, 3), activation='relu',
-                            input_shape=(128, 128, 4),
-                            data_format="channels_last"))
-    model.add(layers.MaxPooling2D((2, 2)))
-   # model.add(layers.Dropout(0.20))
-
-    # layer 2
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.30))
-
-    # layer 3
-    model.add(layers.Conv2D(128, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.4))
-
-    # flatten
-    model.add(layers.Flatten())
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(2, activation='softmax'))
-
-    print(model.summary())
-
-    model.compile(loss='binary_crossentropy',
-                  optimizer=Adam(lr=1e-5),
-                  metrics=['acc'])
-
-    history = model.fit_generator(generator=training_generator,
-                                  validation_data=validation_generator,
-                                  epochs=50, shuffle=True, verbose=2)
-
-    # save model
-    model.save('land_cover_' + name + '_3_conv_512D_binary.h5')
-
-    acc = history.history['acc']
-    val_acc = history.history['val_acc']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-
-    epochs = range(len(acc))
-
-    # plot training & validation accuracy
-    plt.plot(epochs, acc, 'bo', label='Training acc')
-    plt.plot(epochs, val_acc, 'b', label='Validation acc')
-    plt.title('Training and validation accuracy')
-    plt.legend()
-
-    plt.show()  # show accuracy
-
-    plt.figure()
-
-    # plot training & validation loss
-    plt.plot(epochs, loss, 'bo', label='Training loss')
-    plt.plot(epochs, val_loss, 'b', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-
-    # show accuracy and loss plots
-    plt.show()
