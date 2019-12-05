@@ -200,17 +200,17 @@ if __name__ == '__main__':
 
 
     # define binary models
-    binary_model_128_3conv = LC_128_Binary_3Conv_512D()
+    #binary_model_128_3conv = LC_128_Binary_3Conv_512D()
     #binary_model_128_5conv = LC_128_Binary_5Conv_1024D()
     #binary_model_256_3conv = LC_256_Binary_3Conv_512D()
-    #binary_model_256_5conv = LC_256_Binary_5Conv_1024D()
+    binary_model_256_5conv = LC_256_Binary_5Conv_1024D()
     #binary_vgg16_transfer = VGG16_Transfer_Binary()
 
     # run binary training sessions
-    run_binary_training(binary_model_128_3conv, 'LC_128_Binary_3Conv_512D_100e_b', tile_size=128, channels=4)
+    #run_binary_training(binary_model_128_3conv, 'LC_128_Binary_3Conv_512D_100e_b', tile_size=128, channels=4)
     #run_binary_training(binary_model_128_5conv, 'LC_128_Binary_5Conv_1024D_100e_b', tile_size=128, channels=4)
     #run_binary_training(binary_model_256_3conv, 'LC_256_Binary_3conv_512D_100e_b', tile_size=256, channels=4)
-    #run_binary_training(binary_model_256_5conv, 'LC_256_Binary_5conv_1024D_100e_b', tile_size=256, channels=4)
+    run_binary_training(binary_model_256_5conv, 'LC_256_Binary_5conv_1024D_100e_b', tile_size=256, channels=4)
     #run_binary_training(binary_vgg16_transfer, 'LC_256_Binary_VGG16_Transfer_100e_b', tile_size=256, channels=3)
 
     """

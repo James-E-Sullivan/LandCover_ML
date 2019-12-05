@@ -6,6 +6,8 @@ import numpy as np
 from DataPreparation import object_io
 from DataPreparation import data_preparation_functions as dpf
 from sklearn.linear_model import SGDClassifier
+import collections
+import random
 
 tile_size = 256
 
@@ -34,16 +36,40 @@ training_npy_dir = os.path.join(training_dir, 'Data_NPY')
 validation_npy_dir = os.path.join(validation_dir, 'Data_NPY')
 
 
-print(validation_label_dict)
+'''
+counter = 0
+training_list = []
+for a in training_label_dict.keys():
+    counter += 1
+    if counter == 1000:
+        break
 
+    training_list.append(a)
+
+counter = 0
+validation_list = []
+for b in validation_label_dict.keys():
+    counter += 1
+    if counter == 1000:
+        break
+
+    validation_list.append(b)
+
+t = collections.Counter(training_label_dict)
+v = collections.Counter(validation_label_dict)
+
+print("Training Counter:\n", training_list)
+print("\nValidation Counter:\n", validation_list)
+'''
 
 def get_svm_data(label_dict, training=True, dim=(tile_size, tile_size), n_channels=4, batch_size=32):
 
-    #X = np.empty((len(label_dict), *dim, n_channels))
     X = np.empty((1000, (tile_size * tile_size * n_channels)))
     y = np.empty(1000, dtype=int)
 
     ids, labels = zip(*label_dict.items())
+    ids = list(ids)
+    random.shuffle(ids)  # randomize IDs to reduce imbalances
 
     for i, ID in enumerate(ids):
 
@@ -79,17 +105,16 @@ def get_svm_data(label_dict, training=True, dim=(tile_size, tile_size), n_channe
 X_train, y_train = get_svm_data(training_label_dict, training=True)
 X_test, y_test = get_svm_data(validation_label_dict, training=False)
 
-print(X_train.shape)
-print(y_train.shape)
-print(X_test.shape)
-print(y_test.shape)
+print('Training Data Shape:', X_train.shape)
+print('Training Labels Shape', y_train.shape)
+print('Test Data Shape', X_test.shape)
+print('Test Labels Shape', y_test.shape)
 
-print(y_test)
+kernel = 'poly'
 
+classifier = svm.SVC(kernel=kernel, gamma='auto')
 
-#classifier = SGDClassifier()
-
-classifier = svm.SVC(kernel='linear')
+print('Fitting classifier to training data. Kernel=' + kernel)
 
 # train the model using training set
 classifier.fit(X_train, y_train)
@@ -98,6 +123,6 @@ classifier.fit(X_train, y_train)
 y_pred = classifier.predict(X_test)
 
 # model accuracy
-print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
-print("Confusion Matrix:", metrics.confusion_matrix(y_test, y_pred))
+print("\nAccuracy:", metrics.accuracy_score(y_test, y_pred))
+print("\nConfusion Matrix:\n", metrics.confusion_matrix(y_test, y_pred))
 

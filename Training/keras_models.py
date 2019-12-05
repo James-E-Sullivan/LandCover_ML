@@ -63,27 +63,22 @@ def LC_128_Binary_5Conv_1024D(weights_path=None):
                             input_shape=(128, 128, 4),
                             data_format="channels_last"))
     model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.10))
 
     # layer 2
     model.add(layers.Conv2D(64, (3, 3), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.20))
 
     # layer 3
     model.add(layers.Conv2D(128, (3, 3), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.3))
 
     # layer 4
     model.add(layers.Conv2D(256, (3, 3), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.4))
 
     # layer 5
     model.add(layers.Conv2D(512, (3, 3), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
-    #model.add(layers.Dropout(0.5))
 
     # flatten
     model.add(layers.Flatten())
