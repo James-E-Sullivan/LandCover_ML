@@ -10,14 +10,13 @@ from Training.keras_models import LC_256_Binary_3Conv_512D, LC_256_Categorical_3
 
 def prepare_image(filepath):
     img = gdal.Open(filepath)
-    img_array = img.ReadAsArray()
-    new_array = img_array / 255
+    img_arr = img.ReadAsArray()
+    new_array = img_arr / 255
     new_array = np.transpose(new_array, [1, 2, 0])
     return new_array
 
 
 script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-#ext_data_path = os.path.dirname(script_path)
 ext_data_path = dpf.get_external_data_directory()
 
 img_path = 'C:/Users/james/PycharmProjects/LandCover_ML/DataPreparation/' \

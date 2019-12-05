@@ -9,17 +9,16 @@ from sklearn.linear_model import SGDClassifier
 import collections
 import random
 
-tile_size = 256
+tile_size = 256  # set this based on dimensions of dataset
 
 script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-#ext_data_path = os.path.dirname(script_path)
 ext_data_path = dpf.get_external_data_directory()
 
-
-
+# training and validation directories
 training_dir = os.path.join(ext_data_path, 'Data', str(tile_size), 'Training')
 validation_dir = os.path.join(ext_data_path, 'Data', str(tile_size), 'Validation')
 
+# paths to binary training and validation label dictionaries
 training_binary_label_dict_path = os.path.join(training_dir, 'Labels', 'combined_binary_labels.dict')
 validation_binary_label_dict_path = os.path.join(validation_dir, 'Labels', 'combined_binary_labels.dict')
 
@@ -31,39 +30,23 @@ training_ids, training_labels = zip(*training_label_dict.items())
 validation_label_dict = object_io.read_object(validation_binary_label_dict_path)
 validation_ids, validation_labels = zip(*validation_label_dict.items())
 
-
+# paths to binary training and validation image data directories
 training_npy_dir = os.path.join(training_dir, 'Data_NPY')
 validation_npy_dir = os.path.join(validation_dir, 'Data_NPY')
 
 
-'''
-counter = 0
-training_list = []
-for a in training_label_dict.keys():
-    counter += 1
-    if counter == 1000:
-        break
-
-    training_list.append(a)
-
-counter = 0
-validation_list = []
-for b in validation_label_dict.keys():
-    counter += 1
-    if counter == 1000:
-        break
-
-    validation_list.append(b)
-
-t = collections.Counter(training_label_dict)
-v = collections.Counter(validation_label_dict)
-
-print("Training Counter:\n", training_list)
-print("\nValidation Counter:\n", validation_list)
-'''
-
 def get_svm_data(label_dict, training=True, dim=(tile_size, tile_size), n_channels=4, batch_size=32):
+    """
+    Obtain image data and labels from dataset & reshape it for SVM training.
+    :param label_dict: Dict of {name: label} pairs
+    :param training: Is this a training dataset?
+    :param dim: tile dimensions
+    :param n_channels: Number of image channels
+    :param batch_size: Batch size of input data
+    :return:
+    """
 
+    # limits dataset to 1000
     X = np.empty((1000, (tile_size * tile_size * n_channels)))
     y = np.empty(1000, dtype=int)
 
@@ -96,7 +79,7 @@ def get_svm_data(label_dict, training=True, dim=(tile_size, tile_size), n_channe
         # Store class
         y[i] = label_dict[ID]
 
-        if i == 999:
+        if i == 999:  # limit dataset to 1000
             break
 
     return X, y
@@ -110,7 +93,7 @@ print('Training Labels Shape', y_train.shape)
 print('Test Data Shape', X_test.shape)
 print('Test Labels Shape', y_test.shape)
 
-kernel = 'poly'
+kernel = 'sigmoid'  # change this to preferred kernel
 
 classifier = svm.SVC(kernel=kernel, gamma='auto')
 

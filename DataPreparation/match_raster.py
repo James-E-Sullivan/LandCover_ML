@@ -54,10 +54,6 @@ def get_matching_raster(small_raster_path, large_raster_path, output_name):
     os.system(gdal_trans_string)
 
 
-def get_script_path():
-    return os.path.dirname(os.path.realpath(sys.argv[0]))
-
-
 def find_predominant_class(lc_tile_name):
     """
     Obtains mode pixel value from a raster file
@@ -88,42 +84,12 @@ def find_binary_class(lc_tile_name):
         return 0
 
 
-def get_lc_tile_list(folder_path):
-
-    lc_tile_list = []
-
-    try:
-        path = pathlib.Path(folder_path)
-
-        file_counter = 0  # counter for console output
-
-        for entry in path.iterdir():
-
-            ext = os.path.splitext(entry)[-1].lower()
-            file_string = os.path.splitext(entry)[0]
-
-            file_counter += 1
-
-            #print("file string:", file_string)
-            #print("ext:", ext, "\n")
-
-            if ext == ".tif" and file_string.endswith("lc_tile"):
-                print("Matching... :", entry.name)
-
-                # this is a roundabout way
-                #pred_class = find_predominant_class(file_string + ext)
-                pred_class = find_predominant_class_80(file_string + ext)
-
-                lc_tile_list.append((entry.name, pred_class))
-
-        return lc_tile_list
-
-    except Exception as e:
-        print(e)
-
-
 def get_sat_tile_list(folder_path):
-
+    """
+    Creates list of all sat/aerial tile names.
+    :param folder_path: Folder path of sat tiles
+    :return sat_tile_list: list of sat tile names
+    """
     sat_tile_list = []
 
     try:
@@ -138,43 +104,9 @@ def get_sat_tile_list(folder_path):
 
             if ext == ".tif" and file_string.endswith("sat_tile"):
 
-                print(entry.name)
-
                 sat_tile_list.append(entry.name)
 
         return sat_tile_list
-
-    except Exception as e:
-        print(e)
-
-
-def get_label_dict(folder_path):
-
-    lc_tile_dict = {}
-
-    try:
-        path = pathlib.Path(folder_path)
-
-        for entry in path.iterdir():
-
-            file_string, ext = os.path.splitext(entry)
-
-            if ext == ".tif" and file_string.endswith("lc_tile"):
-
-                #diagnostic
-                print("Finding predicted class...")
-
-                # this is a roundabout way
-                pred_class = find_predominant_class_80(file_string + ext)
-
-                print(pred_class)
-
-                # only add if it is not -1
-                if pred_class >= 0:
-
-                    lc_tile_dict[entry.name] = pred_class
-
-        return lc_tile_dict
 
     except Exception as e:
         print(e)
@@ -205,7 +137,6 @@ def get_labels(folder_path):
                 counter += 1
 
                 pred_class = find_predominant_class(entry.as_posix())
-                #label_dict[entry.name] = pred_class
                 label_dict[file_string] = pred_class
 
                 if counter % 1000 is 0:
@@ -218,10 +149,12 @@ def get_labels(folder_path):
 
 
 def get_sat_data(folder_path, tile_size):
-
-    #sat_data_list = []
-    #label_list = []
-
+    """
+    Creates dict of {tile_name: sat_data_array} pairs
+    :param folder_path: Sat data path
+    :param tile_size: Tile dimensions
+    :return sat_data_dict: dict of {tile_name: sat_data_array} pairs
+    """
     sat_data_dict = {}
 
     try:
@@ -244,12 +177,10 @@ def get_sat_data(folder_path, tile_size):
                 # only grab data from 128x128 .tif files
                 if sat_tile_array.shape[1] == tile_size and sat_tile_array.shape[2] == tile_size:
 
-                    #sat_data_dict[entry.name] = sat_tile_array
                     sat_data_dict[file_string] = sat_tile_array
 
                 if counter % 1000 is 0:
                     print('...parsed through', counter, 'sat files.')
-
 
         return sat_data_dict
 
@@ -257,33 +188,15 @@ def get_sat_data(folder_path, tile_size):
         print(e_1)
 
 
-def create_sat_tiles(name, region_directory, lc_tile_directory):
-
-    # list of tuples (lc_tile name, label integer)
-    lc_tiles = get_lc_tile_list(lc_tile_directory)
-
-    sat_filename = "sat_" + name + ".tif"
-    sat_filepath = os.path.join(region_directory, sat_filename)
-
-    for tile in lc_tiles:
-
-        try:
-
-            lc_tile_filename, label = tile  # unpack tile tuple
-            file_path = os.path.join(region_directory, "lc_tiles", lc_tile_filename)
-
-            sat_tile_filename = lc_tile_filename.replace("lc", "sat")
-
-            output_path = os.path.join(region_directory, "sat_tiles", sat_tile_filename)
-
-            get_matching_raster(file_path, sat_filepath, output_path)
-
-        except Exception as e:
-            print(e)
-
-
 def create_lc_tiles(name, region_directory, sat_tile_directory, tilesize):
-
+    """
+    Generates land-cover tiles corresponding to sat tiles (names
+    of sat tiles obtained from sat_tile_list).
+    :param name: Name of region
+    :param region_directory: Region-specific directory
+    :param sat_tile_directory: Directory containing sat tiles
+    :param tilesize: Dimension size of tiles
+    """
     # list of sat tiles
     sat_tiles = get_sat_tile_list(sat_tile_directory)
 
@@ -345,23 +258,12 @@ def create_dataset_dict(name, ext_data_dir, lc_tile_directory, sat_tile_director
         data_dict = dict(zip(id_list, data_list))
         label_dict = dict(zip(id_list, label_list))
 
-        """
-        data_array = np.asarray(data_list)
-        label_array = np.asarray(label_list)
-        """
-
         dataset_dict['data'] = data_dict
         dataset_dict['labels'] = label_dict
 
-        print('\nData and label list lengths match. Values loaded.')
-
-        #project_folder = os.path.dirname(ext_data_dir)
-        data_output_folder = os.path.join(ext_data_dir, 'Data')
-        new_obj_path = os.path.join(data_output_folder,
-                                    'labeled_data_' + name + '.obj')
+        print('\nData and label values loaded into dataset dict.')
 
         return dataset_dict
-        #obj_io.write_object(dataset_dict, new_obj_path)
 
     else:
         print('Data and Label lists did not match. Values were not saved.')

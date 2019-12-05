@@ -377,7 +377,30 @@ if __name__ == '__main__':
     test_model = LC_256_Categorical_3Conv_512D()
     print(test_model.summary())
 
+    # binary models
+    model_0 = LC_128_Binary_3Conv_512D()
+    model_1 = LC_128_Binary_5Conv_1024D()
+    model_2 = LC_256_Binary_3Conv_512D()
+    model_3 = LC_256_Binary_5Conv_1024D()
+    model_4 = VGG16_Transfer_Binary()
 
+    binary_models = [model_0, model_1, model_2, model_3, model_4]
 
+    for model in binary_models:
+        print('\n' + model.name)
+        print(test_model.summary())
+
+    # categorical models
+    model_5 = LC_128_Categorical_3Conv_512D()
+    model_6 = LC_128_Categorical_5Conv_1024D()
+    model_7 = LC_256_Categorical_3Conv_512D()
+    model_8 = LC_256_Categorical_5Conv_1024D()
+    model_9 = VGG16_Transfer_Categorical()
+
+    categorical_models = [model_5, model_6, model_7, model_8, model_9]
+
+    for model in categorical_models:
+        print('\n' + model.name)
+        print(test_model.summary())
 
 
